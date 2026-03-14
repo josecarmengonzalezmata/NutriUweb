@@ -1,0 +1,32 @@
+{
+  "name": "Nutri U",
+  "short_name": "NutriU",
+  "description": "Seguimiento nutricional, citas con nutriologos y planes personalizados",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8FFF9",
+  "theme_color": "#2E8B57",
+  "orientation": "portrait-primary",
+  "id": "/?utm_source=pwa_nutriu_v5",
+  "icons": [
+    {
+      "src": "/pwa-192x192-nutriu-v5.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512-nutriu-v5.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512-maskable-nutriu-v5.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
