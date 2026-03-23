@@ -1,17 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
-import {
-  dbgSupabaseKey,
-  dbgGroup,
-  dbgOk,
-  dbgError,
-  dbgGroupEnd,
-} from "@/utils/debug";
 
-const SUPABASE_URL = "https://hthnkzwjotwqhvjgqhfv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_KjVW1x9pLbfJ0cbH3UwlzQ_JzfO6Mbw";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_KEY;
 
 // Diagnóstico de key al inicializar (solo en DEV)
-dbgSupabaseKey(SUPABASE_URL, SUPABASE_ANON_KEY);
+// (debug call removed for production)
 
 const instrumentedFetch: typeof fetch = async (input, init) => {
   const requestUrl = typeof input === "string" ? input : input.url;
@@ -38,19 +31,12 @@ const instrumentedFetch: typeof fetch = async (input, init) => {
     });
 
     const ms = Math.round(performance.now() - t0);
-    if (import.meta.env.DEV) {
-      console.log(`[SupabaseFetch] ${response.status} ${ms}ms ${requestUrl}`);
-    }
+    // Logging removed for production
 
     return response;
   } catch (error: any) {
     const ms = Math.round(performance.now() - t0);
-    if (import.meta.env.DEV) {
-      console.error(
-        `[SupabaseFetch] FAIL ${ms}ms ${requestUrl}`,
-        error?.name || error?.message || error,
-      );
-    }
+    // Logging removed for production
     throw error;
   } finally {
     clearTimeout(timeoutId);
@@ -63,29 +49,4 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-// Ping de conexión en DEV — confirma que el cliente puede hablar con Supabase
-if (import.meta.env.DEV) {
-  setTimeout(async () => {
-    dbgGroup("supabase", "Connection ping");
-    try {
-      const { error } = await supabase
-        .from("nutriologos")
-        .select("id_nutriologo")
-        .limit(1);
-      if (error) {
-        dbgError(`Ping FALLÓ — verifica URL y API key`, error);
-        console.error(
-          "[NutriU] Supabase error en ping:",
-          error.message,
-          "| code:",
-          error.code,
-        );
-      } else {
-        dbgOk("Ping OK — Supabase responde correctamente");
-      }
-    } catch (e) {
-      dbgError("Ping EXCEPCIÓN — posible CORS o URL incorrecta", e);
-    }
-    dbgGroupEnd();
-  }, 500);
-}
+// Ping de conexión en DEV — removido para producción

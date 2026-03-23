@@ -14,12 +14,13 @@ import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar';
 import { DateTime } from 'luxon';
 import { es } from 'date-fns/locale';
-import { dbgGroup, dbgGroupEnd, dbgLog, dbgOk, dbgWarn, dbgError } from '@/utils/debug';
+// Debug utilities removed for production
 
 const SONORA_TIMEZONE = 'America/Phoenix'; // San Luis Río Colorado, Sonora
 const STORAGE_PUBLIC_URL = 'https://hthnkzwjotwqhvjgqhfv.supabase.co/storage/v1/object/public/perfiles/';
 const WORK_START_HOUR = 8;
 const WORK_END_HOUR = 17;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://servidor-nutri-u.vercel.app';
 const APPOINTMENT_TIME_SLOTS = [
   '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
   '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
@@ -29,6 +30,40 @@ const APPOINTMENT_TIME_SLOTS = [
 const isoDateToLocalDate = (isoDate: string): Date => {
   const [year, month, day] = isoDate.split('-').map(Number);
   return new Date(year, month - 1, day);
+};
+
+const notifyAppointmentStatus = async ({
+  pacienteId,
+  idCita,
+  fechaCita,
+  nutriologoNombre,
+  status,
+}: {
+  pacienteId: number;
+  idCita: number;
+  fechaCita?: string;
+  nutriologoNombre?: string;
+  status: 'confirmed' | 'completed';
+}) => {
+  if (!pacienteId || !idCita) return;
+
+  try {
+    await fetch(`${BACKEND_URL}/notifications/appointment-status`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pacienteId,
+        idCita,
+        fechaCita,
+        nutriologoNombre,
+        status,
+      }),
+    });
+  } catch (error) {
+    // console.warn removed for production
+  }
 };
 
 function AnimatedLoadingScreen() {
@@ -151,22 +186,21 @@ export function GestionCitas() {
   useEffect(() => {
     if (!user?.nutriologoId) {
       setLoading(false);
-      toast.error('No se detectó ID de nutriólogo');
+      toast.error('Ocurrió un error inesperado.');
       return;
     }
     const fetchData = async () => {
-      dbgGroup('screen', `GestionCitas — nutriologoId=${user.nutriologoId}`);
+      // dbgGroup removed for production
       setLoading(true);
 
       const timeoutId = setTimeout(() => {
-        dbgError('GestionCitas: timeout 15s — desbloqueo forzado');
-        console.error('[NutriU] GestionCitas: timeout esperando datos de Supabase.');
+        // dbgError and console.error removed for production
         setLoading(false);
       }, 15000);
 
       try {
         const nutriologoId = Number(user.nutriologoId);
-        dbgLog('Cargando relaciones paciente_nutriologo...');
+        // dbgLog removed for production
         const { data: relaciones, error: errRel } = await supabase
           .from('paciente_nutriologo')
           .select('*')
@@ -174,10 +208,10 @@ export function GestionCitas() {
           .eq('activo', true);
 
         if (errRel) {
-          dbgError('Error paciente_nutriologo', errRel);
+          // dbgError removed for production
           throw errRel;
         }
-        dbgLog(`Relaciones: ${relaciones?.length ?? 0}`);
+        // dbgLog removed for production
 
         const pacienteIds = relaciones?.map(r => r.id_paciente) || [];
         const activeSinceByPaciente = new Map<number, string>();
@@ -251,6 +285,7 @@ export function GestionCitas() {
 
           return {
             id: c.id_cita,
+            id_paciente: c.id_paciente,
             fecha: sonoraDate.toLocaleString(DateTime.DATE_MED),
             hora: sonoraDate.toLocaleString(DateTime.TIME_SIMPLE),
             fecha_hora: c.fecha_hora, // Para filtrar
@@ -263,15 +298,14 @@ export function GestionCitas() {
         });
 
         setCitas(citasFormateadas);
-        dbgOk(`GestionCitas cargada: ${citasFormateadas.length} citas`);
+        // dbgOk removed for production
       } catch (err: any) {
-        dbgError('GestionCitas fetchData error', err);
-        console.error('[NutriU] GestionCitas error:', err?.message ?? err);
-        toast.error('No se pudieron cargar las citas');
+        // dbgError and console.error removed for production
+        toast.error('Ocurrió un error al cargar las citas.');
       } finally {
         clearTimeout(timeoutId);
         setLoading(false);
-        dbgGroupEnd();
+        // dbgGroupEnd removed for production
       }
     };
 
@@ -342,7 +376,7 @@ export function GestionCitas() {
       } else if (filteredPacientes.length > 1) {
         toast.info('Varios pacientes encontrados. Selecciona uno del menú.');
       } else {
-        toast.warning('No se encontró ningún paciente.');
+        toast.warning('No se encontró ningún paciente.'); // Already generic, no sensitive info
       }
     }
   };
@@ -351,7 +385,7 @@ export function GestionCitas() {
     e.preventDefault();
 
     if (!selectedPaciente || !fecha || !hora) {
-      toast.error('Completa todos los campos para agendar la cita.');
+      toast.error('Por favor, completa todos los campos para agendar la cita.');
       return;
     }
 
@@ -364,12 +398,12 @@ export function GestionCitas() {
       const workEndMinutes = WORK_END_HOUR * 60;
 
       if (selectedMinutes < workStartMinutes || selectedMinutes > workEndMinutes) {
-        toast.error('La cita debe agendarse en horario laboral: 08:00 a 17:00.');
+        toast.error('La cita debe agendarse en horario laboral.');
         return;
       }
 
       if (occupiedHoursForSelectedDate.has(hora)) {
-        toast.error('Ese horario ya tiene una cita agendada para la fecha seleccionada.');
+        toast.error('Ya existe una cita agendada en ese horario.');
         return;
       }
 
@@ -379,13 +413,13 @@ export function GestionCitas() {
       );
 
       if (!localSonora.isValid) {
-        toast.error('La fecha u hora seleccionada no es válida.');
+        toast.error('La fecha u hora seleccionada no es válida.'); // Already generic
         return;
       }
 
       const now = DateTime.now().setZone(SONORA_TIMEZONE);
       if (localSonora < now) {
-        toast.error('No se puede agendar citas en fechas pasadas.');
+        toast.error('No se puede agendar citas en fechas pasadas.'); // Already generic
         return;
       }
 
@@ -451,7 +485,7 @@ export function GestionCitas() {
           });
 
         if (notificationError) {
-          toast.error(`La cita se agendó, pero falló la notificación: ${notificationError.message || 'Intenta de nuevo'}`);
+          toast.error('La cita se agendó, pero hubo un problema al notificar al paciente.');
         } else {
           toast.success('Cita agendada exitosamente');
         }
@@ -525,6 +559,7 @@ export function GestionCitas() {
 
           return {
             id: c.id_cita,
+            id_paciente: c.id_paciente,
             fecha: sonoraDate.toLocaleString(DateTime.DATE_MED),
             hora: sonoraDate.toLocaleString(DateTime.TIME_SIMPLE),
             fecha_hora: c.fecha_hora,
@@ -538,18 +573,18 @@ export function GestionCitas() {
         setCitas(formateadas);
       }
     } catch (err: any) {
-      toast.error('Error al agendar la cita: ' + (err.message || 'Intenta de nuevo'));
+      toast.error('Ocurrió un error al agendar la cita.');
     }
   };
 
   const confirmarCita = async (cita: any) => {
     if (!cita.pagada) {
-      toast.error('No puedes confirmar una cita con pago pendiente.');
+      toast.error('No puedes confirmar una cita con pago pendiente.'); // Already generic
       return;
     }
 
     if (cita.estado !== 'pendiente' && cita.estado !== 'pendiente_pagado') {
-      toast.warning('Solo se pueden confirmar citas pendientes.');
+      toast.warning('Solo se pueden confirmar citas pendientes.'); // Already generic
       return;
     }
 
@@ -569,19 +604,27 @@ export function GestionCitas() {
 
       toast.success('Cita confirmada exitosamente');
       setCitas(prev => prev.map(c => c.id === cita.id ? { ...c, estado: 'confirmada' } : c));
+
+      await notifyAppointmentStatus({
+        pacienteId: Number(cita.id_paciente),
+        idCita: Number(cita.id),
+        fechaCita: cita.fecha_hora,
+        nutriologoNombre: `${user?.nombre || ''} ${user?.apellido || ''}`.trim(),
+        status: 'confirmed',
+      });
     } catch (err: any) {
-      toast.error('Error al confirmar la cita');
+      toast.error('Ocurrió un error al confirmar la cita.');
     }
   };
 
   const finalizarCita = async (cita: any) => {
     if (!cita.pagada) {
-      toast.error('No puedes finalizar una cita con pago pendiente.');
+      toast.error('No puedes finalizar una cita con pago pendiente.'); // Already generic
       return;
     }
 
     if (cita.estado !== 'confirmada') {
-      toast.warning('Solo se pueden finalizar citas confirmadas y atendidas.');
+      toast.warning('Solo se pueden finalizar citas confirmadas y atendidas.'); // Already generic
       return;
     }
 
@@ -601,8 +644,16 @@ export function GestionCitas() {
 
       toast.success('Cita marcada como completada');
       setCitas(prev => prev.map(c => c.id === cita.id ? { ...c, estado: 'completada' } : c));
+
+      await notifyAppointmentStatus({
+        pacienteId: Number(cita.id_paciente),
+        idCita: Number(cita.id),
+        fechaCita: cita.fecha_hora,
+        nutriologoNombre: `${user?.nombre || ''} ${user?.apellido || ''}`.trim(),
+        status: 'completed',
+      });
     } catch (err: any) {
-      toast.error('Error al finalizar la cita');
+      toast.error('Ocurrió un error al finalizar la cita.');
     }
   };
 

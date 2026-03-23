@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/ta
 import { useAuth } from '@/app/context/useAuth';
 import { supabase } from '@/app/context/supabaseClient';
 import { toast } from 'sonner';
-import { dbgGroup, dbgGroupEnd, dbgLog, dbgOk, dbgWarn, dbgError } from '@/utils/debug';
+// Debug utilities removed for production
 import { 
   Trophy, 
   Star, 
@@ -182,6 +182,7 @@ export function Gamificacion() {
     nombre_canje: '',
     tipo_canje: 'descuento',
     valor_descuento: '',
+    puntos_requeridos: '',
     cantidad_consultas: '1',
     descripcion: '',
     monto_minimo_consulta: ''
@@ -256,7 +257,7 @@ export function Gamificacion() {
       if (errCanjes) throw errCanjes;
       setCanjes(canjesData || []);
     } catch (error: any) {
-      toast.error('Error cargando rangos y canjes');
+      toast.error('Ocurrió un error al cargar los rangos y canjes.');
     } finally {
       setLoadingCanjes(false);
     }
@@ -334,17 +335,16 @@ export function Gamificacion() {
   };
 
   const fetchMisPacientes = async () => {
-    dbgGroup('screen', `Gamificacion — nutriologoId=${user?.nutriologoId}`);
+    // dbgGroup removed for production
     setLoading(true);
 
     const timeoutId = setTimeout(() => {
-      dbgError('Gamificacion: timeout 15s — desbloqueo forzado');
-      console.error('[NutriU] Gamificacion: timeout esperando datos de Supabase.');
+      // dbgError and console.error removed for production
       setLoading(false);
     }, 15000);
 
     try {
-      dbgLog('Cargando relaciones paciente_nutriologo...');
+      // dbgLog removed for production
       const { data: relaciones, error: errRel } = await supabase
         .from('paciente_nutriologo')
         .select('id_paciente')
@@ -386,17 +386,16 @@ export function Gamificacion() {
         puntos: puntos.find(pt => pt.id_paciente === p.id_paciente)?.puntos_totales || 0,
       }));
 
-      dbgOk(`Gamificacion pacientes cargados: ${pacientesConPuntos.length}`);
+      // dbgOk removed for production
       setMisPacientes(pacientesConPuntos);
       setFilteredPacientes(pacientesConPuntos);
     } catch (error: any) {
-      dbgError('fetchMisPacientes error', error);
-      console.error('[NutriU] Gamificacion error:', error?.message ?? error);
-      toast.error('No se pudieron cargar los pacientes');
+      // dbgError and console.error removed for production
+      toast.error('Ocurrió un error al cargar los pacientes.');
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
-      dbgGroupEnd();
+      // dbgGroupEnd removed for production
     }
   };
   const pacientesFiltrados = misPacientes.filter(paciente =>
@@ -422,11 +421,11 @@ export function Gamificacion() {
     try {
       const puntosNum = parseInt(puntosAsignar);
       if (isNaN(puntosNum) || puntosNum <= 0) {
-        toast.error('Ingresa una cantidad válida de puntos (1 o más)');
+        toast.error('Ingresa una cantidad válida de puntos.');
         return;
       }
       if (puntosNum > 100) {
-        toast.error('El máximo permitido por asignación es 100 puntos');
+        toast.error('No puedes asignar más de 100 puntos a la vez.');
         return;
       }
 
@@ -493,7 +492,7 @@ export function Gamificacion() {
         });
 
       if (notificationError) {
-        toast.error(`Los puntos se asignaron, pero falló la notificación: ${notificationError.message || 'Intenta de nuevo'}`);
+        toast.error('Los puntos se asignaron, pero hubo un problema al notificar al paciente.');
       }
 
       const successMessage = canjesOtorgados.length > 0
@@ -506,7 +505,7 @@ export function Gamificacion() {
       setPuntosAsignar('');
       fetchMisPacientes();
     } catch (error: any) {
-      toast.error('Error al asignar puntos');
+      toast.error('Ocurrió un error al asignar los puntos.');
     }
   };
 
@@ -520,7 +519,7 @@ export function Gamificacion() {
       const { nombre_rango, puntos_minimo, puntos_maximo, descripcion } = rangoFormData;
       
       if (!nombre_rango || !puntos_minimo) {
-        toast.error('Nombre y puntos mínimo son requeridos');
+        toast.error('Debes ingresar nombre y puntos mínimos.');
         return;
       }
 
@@ -528,12 +527,12 @@ export function Gamificacion() {
       const puntosMax = puntos_maximo ? parseInt(puntos_maximo) : null;
 
       if (isNaN(puntosMin) || puntosMin < 0) {
-        toast.error('Puntos mínimo debe ser un número válido');
+        toast.error('El valor de puntos mínimo no es válido.');
         return;
       }
 
       if (puntosMax && (isNaN(puntosMax) || puntosMax <= puntosMin)) {
-        toast.error('Puntos máximo debe ser mayor que mínimo');
+        toast.error('El valor de puntos máximo debe ser mayor que el mínimo.');
         return;
       }
 
@@ -572,10 +571,9 @@ export function Gamificacion() {
       setRangoFormData({ nombre_rango: '', puntos_minimo: '', puntos_maximo: '', descripcion: '' });
       fetchRangosYCanjes();
     } catch (error: any) {
-      toast.error('Error al guardar rango');
+      toast.error('Ocurrió un error al guardar el rango.');
     }
   };
-
   const handleEliminarRango = async (idRango: number) => {
     if (USE_LEGACY_REWARDS_SCHEMA) {
       toast.info('La gestión por rangos está deshabilitada en este esquema.');
@@ -591,21 +589,29 @@ export function Gamificacion() {
       toast.success('Rango desactivado');
       fetchRangosYCanjes();
     } catch (error: any) {
-      toast.error('Error al desactivar rango');
+      toast.error('Ocurrió un error al desactivar el rango.');
     }
   };
 
   const handleGuardarCanje = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { id_rango, nombre_canje, tipo_canje, valor_descuento, cantidad_consultas, descripcion, monto_minimo_consulta } = canjeFormData;
+      const { id_rango, tipo_canje, valor_descuento, puntos_requeridos, descripcion, monto_minimo_consulta } = canjeFormData;
 
       if (USE_LEGACY_REWARDS_SCHEMA) {
-        const puntosRequeridos = parseInt(valor_descuento);
-        if (!nombre_canje || isNaN(puntosRequeridos) || puntosRequeridos < 0) {
-          toast.error('Nombre y puntos requeridos válidos son obligatorios');
+        const descuento = parseInt(valor_descuento);
+        if (isNaN(descuento) || descuento < 0 || descuento > 100) {
+          toast.error('El porcentaje de descuento debe ser entre 0 y 100.');
           return;
         }
+
+        const puntosRequeridos = parseInt(puntos_requeridos);
+        if (isNaN(puntosRequeridos) || puntosRequeridos < 0) {
+          toast.error('El valor de puntos requeridos no es válido.');
+          return;
+        }
+
+        const nombreGenerado = `${descuento}% de descuento`;
 
         const tipoRecompensa = tipo_canje === 'descuento' ? 'descuento' : 'contenido';
 
@@ -613,7 +619,7 @@ export function Gamificacion() {
           const { error } = await supabase
             .from('recompensas')
             .update({
-              nombre: nombre_canje,
+              nombre: nombreGenerado,
               descripcion: descripcion || null,
               tipo_recompensa: tipoRecompensa,
               puntos_requeridos: puntosRequeridos,
@@ -627,7 +633,7 @@ export function Gamificacion() {
           const { error } = await supabase
             .from('recompensas')
             .insert({
-              nombre: nombre_canje,
+              nombre: nombreGenerado,
               descripcion: descripcion || null,
               tipo_recompensa: tipoRecompensa,
               puntos_requeridos: puntosRequeridos,
@@ -645,6 +651,7 @@ export function Gamificacion() {
           nombre_canje: '',
           tipo_canje: 'descuento',
           valor_descuento: '',
+          puntos_requeridos: '',
           cantidad_consultas: '1',
           descripcion: '',
           monto_minimo_consulta: ''
@@ -653,37 +660,38 @@ export function Gamificacion() {
         return;
       }
 
-      if (!id_rango || !nombre_canje) {
-        toast.error('Rango y nombre son requeridos');
+      if (!id_rango) {
+        toast.error('Debes seleccionar un rango.');
         return;
       }
 
       const rangoObj = rangos.find(r => r.id_rango === parseInt(id_rango));
       if (!rangoObj) {
-        toast.error('Rango no válido');
+        toast.error('El rango seleccionado no es válido.');
+        return;
+      }
+
+      const descuento = parseInt(valor_descuento);
+      if (isNaN(descuento) || descuento < 0 || descuento > 100) {
+        toast.error('El descuento debe ser entre 0 y 100%.');
         return;
       }
 
       const dataToSend: any = {
         id_nutriologo: user.nutriologoId,
         id_rango: parseInt(id_rango),
-        nombre_canje,
+        nombre_canje: `${descuento}% de descuento`,
         tipo_canje: 'descuento',
         descripcion: descripcion || null
       };
 
-      const descuento = parseInt(valor_descuento);
-      if (isNaN(descuento) || descuento < 0 || descuento > 100) {
-        toast.error('Descuento debe estar entre 0-100%');
-        return;
-      }
       dataToSend.valor_descuento = descuento;
       dataToSend.cantidad_consultas = null;
 
       if (monto_minimo_consulta) {
         const montoMin = parseFloat(monto_minimo_consulta);
         if (isNaN(montoMin) || montoMin <= 0) {
-          toast.error('Monto mínimo debe ser un número válido');
+          toast.error('El monto mínimo debe ser un número válido.');
           return;
         }
         dataToSend.monto_minimo_consulta = montoMin;
@@ -709,35 +717,57 @@ export function Gamificacion() {
 
         if (error) throw error;
 
-        const pacientesElegibles = misPacientes.filter((paciente) => {
+        // Notificar a TODOS los pacientes del nutriólogo usando el backend
+        const { notifyNewCanjeToPatients } = await import('@/app/lib/notificationService');
+        const nombreNutriologo = `${user?.nombre || ''} ${user?.apellido || ''}`.trim();
+        const titulo = 'Nueva recompensa disponible';
+        const mensaje = nombreNutriologo
+          ? `Hay una nueva recompensa disponible creada por tu nutriólogo ${nombreNutriologo}. ¡Sigue acumulando puntos para poder canjearla!`
+          : `Hay una nueva recompensa disponible. ¡Sigue acumulando puntos para poder canjearla!`;
+
+        await Promise.all(misPacientes.map(async (paciente) => {
+          // Insertar canje solo si cumple requisitos
           const puntosPaciente = Number(paciente.puntos || 0);
-          return (
+          const cumpleRequisitos = (
             puntosPaciente >= Number(rangoObj.puntos_minimo || 0)
             && (rangoObj.puntos_maximo === null || rangoObj.puntos_maximo === undefined || puntosPaciente <= Number(rangoObj.puntos_maximo))
           );
-        });
 
-        for (const paciente of pacientesElegibles) {
-          const { data: existingCanjePaciente } = await supabase
-            .from('canjes_paciente')
-            .select('id_canje_paciente')
-            .eq('id_paciente', paciente.id)
-            .eq('id_canje', canjeCreado.id_canje)
-            .maybeSingle();
+          if (cumpleRequisitos) {
+            const { data: existingCanjePaciente } = await supabase
+              .from('canjes_paciente')
+              .select('id_canje_paciente')
+              .eq('id_paciente', paciente.id)
+              .eq('id_canje', canjeCreado.id_canje)
+              .maybeSingle();
 
-          if (existingCanjePaciente?.id_canje_paciente) {
-            continue;
+            if (!existingCanjePaciente?.id_canje_paciente) {
+              await supabase
+                .from('canjes_paciente')
+                .insert({
+                  id_paciente: paciente.id,
+                  id_canje: canjeCreado.id_canje,
+                  id_nutriologo: user.nutriologoId,
+                  estado: 'disponible',
+                });
+            }
           }
 
-          await supabase
-            .from('canjes_paciente')
-            .insert({
+          await notifyNewCanjeToPatients({
+            pacienteId: paciente.id,
+            titulo,
+            mensaje,
+            datosAdicionales: {
               id_paciente: paciente.id,
+              id_nutriologo: Number(user?.nutriologoId),
               id_canje: canjeCreado.id_canje,
-              id_nutriologo: user.nutriologoId,
-              estado: 'disponible',
-            });
-        }
+              nombre_canje: canjeCreado.nombre_canje,
+              accion: 'navigate',
+              pantalla_destino: 'canjes',
+              subtipo: 'nuevo_canje'
+            }
+          });
+        }));
 
         toast.success('Canje creado');
       }
@@ -749,13 +779,14 @@ export function Gamificacion() {
         nombre_canje: '',
         tipo_canje: 'descuento',
         valor_descuento: '',
+        puntos_requeridos: '',
         cantidad_consultas: '1',
         descripcion: '',
         monto_minimo_consulta: ''
       });
       fetchRangosYCanjes();
     } catch (error: any) {
-      toast.error('Error al guardar canje');
+      toast.error('Ocurrió un error al guardar el canje.');
     }
   };
 
@@ -787,7 +818,7 @@ export function Gamificacion() {
       toast.success('Canje desactivado');
       fetchRangosYCanjes();
     } catch (error: any) {
-      toast.error('Error al desactivar canje');
+      toast.error('Ocurrió un error al desactivar el canje.');
     }
   };
 
@@ -815,8 +846,9 @@ export function Gamificacion() {
         nombre_canje: canje.nombre_canje,
         tipo_canje: 'descuento',
         valor_descuento: USE_LEGACY_REWARDS_SCHEMA
-          ? (canje.puntos_requeridos?.toString() || '')
+          ? ((String(canje.nombre_canje || '').match(/(\d{1,3})(?=%)/)?.[1]) || '')
           : (canje.valor_descuento?.toString() || ''),
+        puntos_requeridos: canje.puntos_requeridos?.toString() || '',
         cantidad_consultas: canje.cantidad_consultas?.toString() || '1',
         descripcion: canje.descripcion || '',
         monto_minimo_consulta: canje.monto_minimo_consulta?.toString() || ''
@@ -828,12 +860,34 @@ export function Gamificacion() {
         nombre_canje: '',
         tipo_canje: 'descuento',
         valor_descuento: '',
+        puntos_requeridos: '',
         cantidad_consultas: '1',
         descripcion: '',
         monto_minimo_consulta: ''
       });
     }
     setIsCanjeDialogOpen(true);
+  };
+
+  const handleDescuentoInputChange = (rawValue: string) => {
+    const onlyDigits = rawValue.replace(/\D/g, '');
+
+    if (onlyDigits === '') {
+      setCanjeFormData({ ...canjeFormData, valor_descuento: '' });
+      return;
+    }
+
+    const numericValue = Number(onlyDigits);
+    if (numericValue > 100) {
+      return;
+    }
+
+    setCanjeFormData({ ...canjeFormData, valor_descuento: String(numericValue) });
+  };
+
+  const handlePuntosRequeridosInputChange = (rawValue: string) => {
+    const onlyDigits = rawValue.replace(/\D/g, '');
+    setCanjeFormData({ ...canjeFormData, puntos_requeridos: onlyDigits });
   };
 
   return (
@@ -1343,12 +1397,17 @@ export function Gamificacion() {
                           </div>}
                           <div className="space-y-2">
                             <Label className="text-xs md:text-sm font-black uppercase text-gray-400 tracking-wider">
-                              Nombre del Canje
+                              Porcentaje de Descuento (0-100%)
                             </Label>
                             <Input
-                              placeholder="e.g., 15% de descuento"
-                              value={canjeFormData.nombre_canje}
-                              onChange={(e) => setCanjeFormData({ ...canjeFormData, nombre_canje: e.target.value })}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              min="0"
+                              max="100"
+                              placeholder="15"
+                              value={canjeFormData.valor_descuento}
+                              onChange={(e) => handleDescuentoInputChange(e.target.value)}
                               className="border-2 border-[#D1E8D5] rounded-xl h-12 font-bold"
                               required
                             />
@@ -1367,32 +1426,15 @@ export function Gamificacion() {
                           {USE_LEGACY_REWARDS_SCHEMA && (
                             <div className="space-y-2">
                               <Label className="text-xs md:text-sm font-black uppercase text-gray-400 tracking-wider">
-                                Puntos Requeridos para Canjear
+                                Puntos Requeridos para Reclamar
                               </Label>
                               <Input
-                                type="number"
-                                min="0"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 placeholder="100"
-                                value={canjeFormData.valor_descuento}
-                                onChange={(e) => setCanjeFormData({ ...canjeFormData, valor_descuento: e.target.value })}
-                                className="border-2 border-[#D1E8D5] rounded-xl h-12 font-bold"
-                                required
-                              />
-                            </div>
-                          )}
-
-                          {!USE_LEGACY_REWARDS_SCHEMA && (
-                            <div className="space-y-2">
-                              <Label className="text-xs md:text-sm font-black uppercase text-gray-400 tracking-wider">
-                                Porcentaje de Descuento (0-100%)
-                              </Label>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                placeholder="15"
-                                value={canjeFormData.valor_descuento}
-                                onChange={(e) => setCanjeFormData({ ...canjeFormData, valor_descuento: e.target.value })}
+                                value={canjeFormData.puntos_requeridos}
+                                onChange={(e) => handlePuntosRequeridosInputChange(e.target.value)}
                                 className="border-2 border-[#D1E8D5] rounded-xl h-12 font-bold"
                                 required
                               />

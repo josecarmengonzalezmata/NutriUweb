@@ -13,7 +13,7 @@ import { DollarSign, Download, TrendingUp, CreditCard, CheckCircle, Clock, Walle
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { DateTime } from 'luxon';
-import { dbgGroup, dbgGroupEnd, dbgLog, dbgOk, dbgError } from '@/utils/debug';
+// Debug utilities removed for production
 
 const STORAGE_PUBLIC_URL = 'https://hthnkzwjotwqhvjgqhfv.supabase.co/storage/v1/object/public/perfiles/';
 const SONORA_TIMEZONE = 'America/Phoenix';
@@ -168,23 +168,22 @@ export function GestionPagos() {
   useEffect(() => {
     if (!user?.nutriologoId) {
       setLoading(false);
-      toast.error('No se detectó ID de nutriólogo');
+      toast.error('Ocurrió un error inesperado.');
       return;
     }
 
     const fetchPagos = async () => {
-      dbgGroup('screen', `GestionPagos — nutriologoId=${user.nutriologoId}`);
+      // dbgGroup removed for production
       setLoading(true);
 
       const timeoutId = setTimeout(() => {
-        dbgError('GestionPagos: timeout 15s — desbloqueo forzado');
-        console.error('[NutriU] GestionPagos: timeout esperando datos de Supabase.');
+        // dbgError and console.error removed for production
         setLoading(false);
       }, 15000);
 
       try {
         const nutriologoId = Number(user.nutriologoId);
-        dbgLog('Cargando datos de pagos...');
+        // dbgLog removed for production
         const { data: nutriologoData, error: errNutriologo } = await supabase
           .from('nutriologos')
           .select('tarifa_consulta')
@@ -333,16 +332,15 @@ export function GestionPagos() {
         setIngresosTotales(ingresos);
         setPendientesCobro(pendientes);
         setCitasEsteMes(citasMes);
-        dbgOk(`GestionPagos cargada: ${citasFormateadas.length} pagos`);
+        // dbgOk removed for production
 
       } catch (err: any) {
-        dbgError('GestionPagos fetchPagos error', err);
-        console.error('[NutriU] GestionPagos error:', err?.message ?? err);
-        toast.error('No se pudieron cargar los pagos');
+        // dbgError and console.error removed for production
+        toast.error('Ocurrió un error al cargar los pagos.');
       } finally {
         clearTimeout(timeoutId);
         setLoading(false);
-        dbgGroupEnd();
+        // dbgGroupEnd removed for production
       }
     };
 
@@ -379,7 +377,7 @@ export function GestionPagos() {
   }, [searchQuery, citas, selectedDate]);
   const descargarRecibo = (cita: any) => {
     if (!cita.pagada) {
-      toast.error('No se puede descargar el recibo hasta que el pago esté completado.');
+      toast.error('No puedes descargar el recibo hasta que el pago esté completado.');
       return;
     }
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' }); // ← VERTICAL (portrait)

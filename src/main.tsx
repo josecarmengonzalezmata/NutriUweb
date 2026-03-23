@@ -12,12 +12,12 @@ const CHUNK_RELOAD_GUARD_KEY = 'nutriu_chunk_reload_once';
 const tryRecoverChunkLoad = (reason: string) => {
   const alreadyReloaded = sessionStorage.getItem(CHUNK_RELOAD_GUARD_KEY) === '1';
   if (alreadyReloaded) {
-    console.error('[NutriU] Chunk load failed after reload:', reason);
+    // Error: Chunk load failed after reload (hidden in production)
     return;
   }
 
   sessionStorage.setItem(CHUNK_RELOAD_GUARD_KEY, '1');
-  console.warn('[NutriU] Chunk load mismatch detected, reloading once...', reason);
+  // Warn: Chunk load mismatch detected (hidden in production)
   window.location.reload();
 };
 
@@ -56,8 +56,8 @@ if (isLocalhost && 'serviceWorker' in navigator) {
 
 if (!isLocalhost && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.error('[NutriU] SW register failed:', err);
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // SW register failed (hidden in production)
     });
   });
 }

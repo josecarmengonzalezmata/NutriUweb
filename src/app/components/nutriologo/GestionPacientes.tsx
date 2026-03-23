@@ -13,7 +13,7 @@ import { supabase } from '@/app/context/supabaseClient';
 import { Search, Award, TrendingUp, User, Activity, Users, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import {ImageWithFallback} from '@/app/components/figma/ImageWithFallback';
-import { dbgGroup, dbgGroupEnd, dbgLog, dbgOk, dbgWarn, dbgError } from '@/utils/debug';
+
 
 const formatPoints = (value: number) => Number(value || 0).toLocaleString('es-MX');
 function AnimatedLoadingScreen() {
@@ -132,18 +132,16 @@ export function GestionPacientes() {
     }
 
     const fetchPacientes = async () => {
-      dbgGroup('screen', `GestionPacientes — nutriologoId=${user.nutriologoId}`);
+      // Debug group removed for production
       setLoading(true);
 
       // Safety: si la DB no responde en 15s, desbloqueamos la UI
       const timeoutId = setTimeout(() => {
-        dbgError('GestionPacientes: timeout 15s — desbloqueo forzado');
-        console.error('[NutriU] GestionPacientes: timeout esperando datos de Supabase. Verifica conexión y API key.');
         setLoading(false);
       }, 15000);
 
       try {
-        dbgLog('Cargando relaciones paciente_nutriologo...');
+        // Debug log removed for production
         const { data: relaciones, error: errRel } = await supabase
           .from('paciente_nutriologo')
           .select('id_paciente')
@@ -151,18 +149,15 @@ export function GestionPacientes() {
           .eq('activo', true);
 
         if (errRel) {
-          dbgError('Error paciente_nutriologo', errRel);
           throw errRel;
         }
 
-        dbgLog(`Relaciones encontradas: ${relaciones?.length ?? 0}`);
+        // Debug log removed for production
 
         if (!relaciones?.length) {
-          dbgWarn('Sin pacientes asignados a este nutriólogo');
           setPacientes([]);
           clearTimeout(timeoutId);
           setLoading(false);
-          dbgGroupEnd();
           return;
         }
 
@@ -223,16 +218,13 @@ export function GestionPacientes() {
           })
         );
 
-        dbgOk(`Pacientes cargados: ${pacientesConFotos.length}`);
+        // Debug ok removed for production
         setPacientes(pacientesConFotos);
       } catch (err: any) {
-        dbgError('fetchPacientes error', err);
-        console.error('[NutriU] GestionPacientes error:', err?.message ?? err);
-        toast.error('No se pudieron cargar los pacientes');
+        toast.error('No se pudieron cargar los pacientes. Intenta de nuevo más tarde.');
       } finally {
         clearTimeout(timeoutId);
         setLoading(false);
-        dbgGroupEnd();
       }
     };
 
@@ -281,11 +273,11 @@ export function GestionPacientes() {
     const alturaNum = parseFloat(editAltura);
 
     if (isNaN(pesoNum) || pesoNum < 0 || pesoNum > 700) {
-      toast.error('Peso debe estar entre 0 y 700 kg');
+      toast.error('Peso inválido. Verifica el valor ingresado.');
       return;
     }
     if (isNaN(alturaNum) || alturaNum < 0 || alturaNum > 300) {
-      toast.error('Altura debe estar entre 0 y 300 cm');
+      toast.error('Altura inválida. Verifica el valor ingresado.');
       return;
     }
 
@@ -320,7 +312,7 @@ export function GestionPacientes() {
       setHasChanges(false);
       toast.success('Datos actualizados correctamente');
     } catch (err: any) {
-      toast.error('No se pudo actualizar: ' + (err.message || 'Intenta de nuevo'));
+      toast.error('No se pudo actualizar la información. Intenta de nuevo más tarde.');
     } finally {
       setEditLoading(false);
     }

@@ -125,8 +125,7 @@ export function EstadisticasAdmin() {
   const [ingresosPorMes, setIngresosPorMes] = useState([]);
   const [rendimientoNutriologos, setRendimientoNutriologos] = useState([]);
   const [ingresosPorNutriologo, setIngresosPorNutriologo] = useState([]);
-  const [expandedChart, setExpandedChart] = useState<string | null>(null);
-  const [chartZoom, setChartZoom] = useState(1);
+  // Eliminado expandedChart y chartZoom, ya no se usan
   const now = new Date();
   const currentYear = now.getFullYear();
   const [periodType, setPeriodType] = useState<'dia' | 'semana' | 'mes' | 'año'>('mes');
@@ -458,14 +457,7 @@ export function EstadisticasAdmin() {
 
     toast.success('Vista previa del PDF abierta. Descárgalo desde el visor si lo deseas.');
   };
-  const handleExpandChart = (chartName: string) => {
-    setExpandedChart(chartName);
-    setChartZoom(1);
-  };
-
-  const handleCloseChart = () => {
-    setExpandedChart(null);
-  };
+  // Eliminado handleExpandChart y handleCloseChart
 
   const formatCompactValue = (value: number) => {
     if (value >= 1000) {
@@ -692,8 +684,7 @@ export function EstadisticasAdmin() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card 
-          className="shadow-sm border-none ring-1 ring-gray-200 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleExpandChart('flujo-pacientes')}
+          className="shadow-sm border-none ring-1 ring-gray-200 transition-shadow"
         >
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">Flujo de Pacientes</CardTitle>
@@ -736,8 +727,7 @@ export function EstadisticasAdmin() {
         </Card>
 
         <Card 
-          className="shadow-sm border-none ring-1 ring-gray-200 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => handleExpandChart('correlacion')}
+          className="shadow-sm border-none ring-1 ring-gray-200 transition-shadow"
         >
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">Correlación Citas vs Ingresos</CardTitle>
@@ -803,8 +793,7 @@ export function EstadisticasAdmin() {
         </Card>
       </div>
       <Card 
-        className="shadow-sm border-none ring-1 ring-gray-200 cursor-pointer hover:shadow-md transition-shadow"
-        onClick={() => handleExpandChart('ingresos-nutriologo')}
+        className="shadow-sm border-none ring-1 ring-gray-200 transition-shadow"
       >
         <CardHeader>
           <CardTitle className="text-xl md:text-2xl">Ingresos por Especialista</CardTitle>
@@ -901,262 +890,6 @@ export function EstadisticasAdmin() {
           </div>
         </CardContent>
       </Card>
-      {expandedChart && (
-        <div 
-          className="fixed top-0 bottom-0 right-0 left-[320px] bg-gray-50/50 z-40 flex items-center justify-center p-6"
-          onClick={handleCloseChart}
-        >
-          <div 
-            className="bg-white rounded-xl shadow-2xl w-full h-full overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {expandedChart === 'flujo-pacientes' && 'Flujo de Pacientes'}
-                  {expandedChart === 'correlacion' && 'Correlación Citas vs Ingresos'}
-                  {expandedChart === 'ingresos-nutriologo' && 'Ingresos por Especialista'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">Haz zoom con la rueda del ratón o con los botones. Arrastra para mover.</p>
-              </div>
-              <button
-                onClick={handleCloseChart}
-                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                <X size={24} className="text-gray-600" />
-              </button>
-            </div>
-
-            <TransformWrapper
-              minScale={0.5}
-              maxScale={3}
-              initialScale={1}
-              wheel={{ step: 0.1 }}
-              pinch={{ step: 5 }}
-              panning={{ velocityDisabled: true }}
-              onTransformed={(ref) => {
-                setChartZoom(ref.state.scale);
-              }}
-            >
-              {({ zoomIn, zoomOut, resetTransform, setTransform, instance }) => (
-                <>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-200 gap-4">
-                    <div className="flex items-center gap-3">
-                      <Button
-                        onClick={() => zoomOut(0.2)}
-                        variant="outline"
-                        size="sm"
-                        className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#F0FFF4]"
-                      >
-                        <Minus size={16} />
-                      </Button>
-                      <span className="text-sm font-bold text-gray-700 w-20 text-center">
-                        {Math.round(chartZoom * 100)}%
-                      </span>
-                      <Button
-                        onClick={() => zoomIn(0.2)}
-                        variant="outline"
-                        size="sm"
-                        className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#F0FFF4]"
-                      >
-                        <Plus size={16} />
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          resetTransform();
-                          setChartZoom(1);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 text-gray-600"
-                      >
-                        Reset
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 mr-2">Mover eje X:</span>
-                      <Button
-                        onClick={() => setTransform(instance.transformState.positionX - 40, instance.transformState.positionY, instance.transformState.scale, 150)}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 px-2"
-                      >
-                        ←
-                      </Button>
-                      <Button
-                        onClick={() => setTransform(instance.transformState.positionX + 40, instance.transformState.positionY, instance.transformState.scale, 150)}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 px-2"
-                      >
-                        →
-                      </Button>
-
-                      <span className="text-xs text-gray-500 ml-4 mr-2">Mover eje Y:</span>
-                      <Button
-                        onClick={() => setTransform(instance.transformState.positionX, instance.transformState.positionY - 40, instance.transformState.scale, 150)}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 px-2"
-                      >
-                        ↑
-                      </Button>
-                      <Button
-                        onClick={() => setTransform(instance.transformState.positionX, instance.transformState.positionY + 40, instance.transformState.scale, 150)}
-                        variant="outline"
-                        size="sm"
-                        className="border-gray-300 px-2"
-                      >
-                        ↓
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-auto p-6 bg-white">
-                    <TransformComponent wrapperStyle={{ width: '100%', height: '100%' }}>
-                {expandedChart === 'flujo-pacientes' && (
-                  <div style={{ width: '100%', height: '68vh', minWidth: '900px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={expandedFlujoData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                        <XAxis
-                          dataKey="mes"
-                          axisLine={false}
-                          tickLine={false}
-                          interval={0}
-                          minTickGap={0}
-                          angle={-30}
-                          textAnchor="end"
-                          height={56}
-                          tick={{ fill: '#94a3b8', fontSize: 12 }}
-                          dy={10}
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          domain={[0, visitsAxisConfig.max]}
-                          ticks={visitsAxisConfig.ticks}
-                          allowDecimals={false}
-                          tickFormatter={formatCompactValue}
-                          tickMargin={8}
-                          width={56}
-                          tick={{ fill: '#94a3b8', fontSize: 13 }}
-                        />
-                        <Tooltip 
-                          formatter={(value) => Number(value || 0).toLocaleString('es-MX')}
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        />
-                        <Line type="monotone" dataKey="visitas" stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                {expandedChart === 'correlacion' && (
-                  <div style={{ width: '100%', height: '68vh', minWidth: '900px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={expandedCorrelacionData}>
-                        <defs>
-                          <linearGradient id="colorVisitasExp" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorIngresosExp" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                        <XAxis
-                          dataKey="mes"
-                          axisLine={false}
-                          tickLine={false}
-                          interval={0}
-                          minTickGap={0}
-                          angle={-30}
-                          textAnchor="end"
-                          height={56}
-                          tick={{ fill: '#94a3b8', fontSize: 12 }}
-                          dy={10}
-                        />
-                        <YAxis
-                          yAxisId="left"
-                          axisLine={false}
-                          tickLine={false}
-                          domain={[0, visitsAxisConfig.max]}
-                          ticks={visitsAxisConfig.ticks}
-                          allowDecimals={false}
-                          tickFormatter={formatCompactValue}
-                          tickMargin={8}
-                          width={56}
-                          tick={{ fill: '#94a3b8', fontSize: 13 }}
-                        />
-                        <YAxis
-                          yAxisId="right"
-                          orientation="right"
-                          axisLine={false}
-                          tickLine={false}
-                          domain={[10000, 100000]}
-                          ticks={[10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000]}
-                          allowDecimals={false}
-                          tickMargin={8}
-                          width={56}
-                          tickFormatter={formatCompactValue}
-                          tick={{ fill: '#94a3b8', fontSize: 13 }}
-                        />
-                        <Tooltip
-                          formatter={(value, name) => {
-                            const numeric = Number(value || 0);
-                            if (name === 'ingresos') return `$${numeric.toLocaleString('es-MX')}`;
-                            return numeric.toLocaleString('es-MX');
-                          }}
-                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        />
-                        <Legend />
-                        <Area yAxisId="left" type="monotone" dataKey="visitas" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorVisitasExp)" />
-                        <Area yAxisId="right" type="monotone" dataKey="ingresos" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorIngresosExp)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                {expandedChart === 'ingresos-nutriologo' && (
-                  <div style={{ width: '100%', height: '68vh', minWidth: '900px' }}>
-                    {ingresosPorNutriologo.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={expandedIngresosData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={true}
-                            label={({ name, value }) => `${name}: $${(value || 0).toLocaleString('es-MX')}`}
-                            outerRadius={Math.max(180, Math.min(280, incomeAxisConfig.max / 800))}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {expandedIngresosData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => `$${(value || 0).toLocaleString('es-MX')}`} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-gray-500">
-                        No hay datos de ingresos disponibles
-                      </div>
-                    )}
-                  </div>
-                )}
-                    </TransformComponent>
-                  </div>
-                </>
-              )}
-            </TransformWrapper>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

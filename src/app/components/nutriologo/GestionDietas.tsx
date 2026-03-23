@@ -33,7 +33,7 @@ import {
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { dbgGroup, dbgGroupEnd, dbgLog, dbgOk, dbgError } from '@/utils/debug';
+// Debug utilities removed for production
 
 type MealKey = 'desayuno' | 'colacion1' | 'almuerzo' | 'colacion2' | 'cena' | 'snack';
 
@@ -58,6 +58,15 @@ type MealData = {
 type DietaData = Record<MealKey, MealData>;
 type WeeklyDietaData = Record<number, DietaData>;
 type WeeklyMealIngredientSelection = Record<number, Record<MealKey, string>>;
+
+type DietaDetallePayload = {
+  dia_semana: number;
+  tipo_comida: string;
+  descripcion?: string | null;
+  categoria?: string | null;
+  porcion_sugerida?: string | null;
+  horario?: string | null;
+};
 const UNIDADES_PORCION = [
   'unidad', 'pieza', 'rebanada', 'cucharada', 'cucharadita', 
   'taza', 'vaso', 'puñado', 'porción', 'fracción', 
@@ -74,6 +83,81 @@ const DIETA_DETALLE_CATEGORIAS_VALIDAS = new Set([
 ]);
 
 const STORAGE_PUBLIC_URL = 'https://hthnkzwjotwqhvjgqhfv.supabase.co/storage/v1/object/public/perfiles/';
+
+const normalizeComparable = (value?: string | null) =>
+  String(value || '').trim().toLowerCase();
+
+const buildDetalleKey = (detalle: DietaDetallePayload) =>
+  `${Number(detalle.dia_semana)}|${String(detalle.tipo_comida || '').trim()}`;
+
+const extractChangedMealsSummary = (
+  previousDetails: DietaDetallePayload[] = [],
+  nextDetails: DietaDetallePayload[] = [],
+) => {
+  const prevMap = new Map<string, DietaDetallePayload>();
+  const nextMap = new Map<string, DietaDetallePayload>();
+
+  previousDetails.forEach((detalle) => prevMap.set(buildDetalleKey(detalle), detalle));
+  nextDetails.forEach((detalle) => nextMap.set(buildDetalleKey(detalle), detalle));
+
+  const keys = new Set<string>([
+    ...Array.from(prevMap.keys()),
+    ...Array.from(nextMap.keys()),
+  ]);
+
+  const changedMeals = new Set<string>();
+  const changedDays = new Set<number>();
+
+  keys.forEach((key) => {
+    const prev = prevMap.get(key);
+    const next = nextMap.get(key);
+
+    if (!prev && next) {
+      changedMeals.add(String(next.tipo_comida || '').trim());
+      changedDays.add(Number(next.dia_semana || 0));
+      return;
+    }
+
+    if (prev && !next) {
+      changedMeals.add(String(prev.tipo_comida || '').trim());
+      changedDays.add(Number(prev.dia_semana || 0));
+      return;
+    }
+
+    if (!prev || !next) return;
+
+    const changed =
+      normalizeComparable(prev.descripcion) !== normalizeComparable(next.descripcion) ||
+      normalizeComparable(prev.categoria) !== normalizeComparable(next.categoria) ||
+      normalizeComparable(prev.porcion_sugerida) !== normalizeComparable(next.porcion_sugerida) ||
+      normalizeComparable(prev.horario) !== normalizeComparable(next.horario);
+
+    if (changed) {
+      changedMeals.add(String(next.tipo_comida || prev.tipo_comida || '').trim());
+      changedDays.add(Number(next.dia_semana || prev.dia_semana || 0));
+    }
+  });
+
+  const mealsArray = Array.from(changedMeals).filter(Boolean);
+  const daysArray = Array.from(changedDays).filter((day) => day >= 1 && day <= 7).sort((a, b) => a - b);
+
+  let mealUpdatedLabel: string | null = null;
+  if (mealsArray.length === 1) {
+    mealUpdatedLabel = mealsArray[0];
+  } else if (mealsArray.length > 1) {
+    mealUpdatedLabel = `${mealsArray[0]} y ${mealsArray.length - 1} más`;
+  }
+
+  let dayUpdatedLabel: string | null = null;
+  if (daysArray.length === 1) {
+    dayUpdatedLabel = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][daysArray[0]] || null;
+  }
+
+  return {
+    mealUpdatedLabel,
+    dayUpdatedLabel,
+  };
+};
 
 function normalizeCategoriaForDietaDetalle(categoria?: string | null): string | null {
   if (!categoria) return null;
@@ -281,12 +365,11 @@ export function GestionDietas() {
       return;
     }
 
-    dbgGroup('screen', `GestionDietas — nutriologoId=${user.nutriologoId}`);
+    // dbgGroup removed for production
     setLoading(true);
 
     const timeoutId = setTimeout(() => {
-      dbgError('GestionDietas: timeout 15s — desbloqueo forzado');
-      console.error('[NutriU] GestionDietas: timeout esperando datos de Supabase.');
+      // dbgError and console.error removed for production
       setLoading(false);
     }, 15000);
 
@@ -298,12 +381,12 @@ export function GestionDietas() {
         .single();
 
       if (nutriError) {
-        dbgError('Error nutriologos', nutriError);
+        // dbgError removed for production
         clearTimeout(timeoutId);
-        dbgGroupEnd();
+        // dbgGroupEnd removed for production
         throw nutriError;
       }
-      dbgLog('nutriData', nutriData);
+      // dbgLog removed for production
       setNutriologoEmail(nutriData?.correo || 'nutriologo@nutriu.com');
 
       const { data: relData, error: relError } = await supabase
@@ -369,16 +452,15 @@ export function GestionDietas() {
       }));
 
       setDietas(enriched);
-      dbgOk(`GestionDietas cargada: ${enriched.length} dietas`);
+      // dbgOk removed for production
 
     } catch (err: any) {
-      dbgError('GestionDietas fetchData error', err);
-      console.error('[NutriU] GestionDietas error:', err?.message ?? err);
-      toast.error('Error al cargar datos: ' + (err.message || 'Intenta de nuevo'));
+      // dbgError and console.error removed for production
+      toast.error('Ocurrió un error al cargar los datos.');
     } finally {
       clearTimeout(timeoutId);
       setLoading(false);
-      dbgGroupEnd();
+      // dbgGroupEnd removed for production
     }
   };
 
@@ -398,7 +480,7 @@ export function GestionDietas() {
       setAlimentos(data || []);
       setFilteredAlimentos(data || []);
     } catch (err: any) {
-      toast.error('Error cargando alimentos');
+      toast.error('Ocurrió un error al cargar los alimentos.');
     }
   };
 
@@ -463,7 +545,7 @@ export function GestionDietas() {
           return false;
         }
       } catch (err: any) {
-        toast.error('No se pudo validar la dieta del paciente');
+        toast.error('No se pudo validar la dieta del paciente.');
         return false;
       }
     }
@@ -536,7 +618,18 @@ export function GestionDietas() {
       toast.warning('Ingresa una cantidad mayor a 0');
       return;
     }
-    const porcionCompleta = `${cantidadStr} ${unidad}${cantidadNum !== 1 && !unidad.endsWith('s') ? 's' : ''}`.trim();
+    // Pluralización correcta para unidad/unidades y porción/porciones
+    let unidadPlural = unidad;
+    if (cantidadNum !== 1) {
+      if (unidad === 'unidad') {
+        unidadPlural = 'unidades';
+      } else if (unidad === 'porción') {
+        unidadPlural = 'porciones';
+      } else if (!unidad.endsWith('s')) {
+        unidadPlural = unidad + 's';
+      }
+    }
+    const porcionCompleta = `${cantidadStr} ${unidadPlural}`.trim();
 
     setDietaByDay(prev => {
       const currentIngredientes = prev[dia][meal].ingredientes || [];
@@ -697,7 +790,7 @@ export function GestionDietas() {
       toast.success('Plan nutricional eliminado correctamente');
       await fetchData();
     } catch (err: any) {
-      toast.error('Error al eliminar el plan: ' + (err.message || 'Intenta de nuevo'));
+      toast.error('Ocurrió un error al eliminar el plan.');
     } finally {
       setDeleteDialogOpen(false);
       setDietaToDelete(null);
@@ -707,7 +800,7 @@ export function GestionDietas() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.nutriologoId) return toast.error('No se encontró ID de nutriólogo');
+    if (!user?.nutriologoId) return toast.error('Ocurrió un error inesperado.');
     if (!selectedPaciente) return toast.error('Selecciona un paciente');
 
     const diasSinComidas = Array.from({ length: 7 }, (_, idx) => idx + 1).filter((dia) => {
@@ -716,7 +809,7 @@ export function GestionDietas() {
 
     if (diasSinComidas.length > 0) {
       const diasFaltantes = diasSinComidas.map(dia => diasSemana[dia]).join(', ');
-      return toast.error(`Falta agregar al menos una comida en: ${diasFaltantes}`);
+      return toast.error('Falta agregar al menos una comida.');
     }
 
     setLoading(true);
@@ -829,6 +922,15 @@ export function GestionDietas() {
           });
       });
 
+      const previousDetails = (isEditing && editingDietaData?.dieta_detalle)
+        ? (editingDietaData.dieta_detalle as DietaDetallePayload[])
+        : [];
+
+      const { mealUpdatedLabel, dayUpdatedLabel } = extractChangedMealsSummary(
+        previousDetails,
+        detalles as DietaDetallePayload[],
+      );
+
       if (detalles.length > 0) {
         const { error: detalleError } = await supabase.from('dieta_detalle').insert(detalles);
         if (detalleError) throw detalleError;
@@ -848,26 +950,54 @@ export function GestionDietas() {
 
         const dietaNombre = `Plan semanal - ${new Date().toLocaleDateString('es-MX')}`;
         const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://servidor-nutri-u.vercel.app';
-        const notificationResponse = await fetch(`${backendUrl}/notifications/diet-updated`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            pacienteId: parseInt(selectedPaciente),
-            nutriologoNombre,
-            dietaNombre,
-            action: isEditing ? 'updated' : 'created',
-          }),
-        });
+        const notificationPayload = {
+          pacienteId: parseInt(selectedPaciente),
+          nutriologoNombre,
+          dietaNombre,
+          action: isEditing ? 'updated' : 'created',
+          mealUpdatedLabel: isEditing ? mealUpdatedLabel : null,
+          dayUpdatedLabel: isEditing ? dayUpdatedLabel : null,
+        };
 
-        if (notificationResponse.ok) {
-          const result = await notificationResponse.json();
-          if (result.sent > 0) {
+        const sendNotification = async () => {
+          const response = await fetch(`${backendUrl}/notifications/diet-updated`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(notificationPayload),
+          });
+
+          const rawText = await response.text();
+          let parsed: any = null;
+          try {
+            parsed = rawText ? JSON.parse(rawText) : null;
+          } catch {
+            parsed = null;
           }
-        } else {
+
+          return { response, parsed, rawText };
+        };
+
+        let notificationResult = await sendNotification();
+
+        if (!notificationResult.response.ok) {
+          await new Promise((resolve) => setTimeout(resolve, 700));
+          notificationResult = await sendNotification();
+        }
+
+        if (!notificationResult.response.ok) {
+          throw new Error(
+            `No se pudo enviar notificación push (${notificationResult.response.status}): ${notificationResult.rawText || 'sin detalle'}`,
+          );
+        }
+
+        if ((notificationResult.parsed?.sent ?? 0) === 0) {
+          // toast.warning('Plan guardado, pero no hay dispositivo push activo para ese paciente en este momento.');
         }
       } catch (notifError) {
+        // console.error removed for production
+        toast.warning('Plan guardado, pero hubo un problema al enviar la notificación push inmediata.');
       }
 
       setIsDialogOpen(false);
@@ -884,8 +1014,7 @@ export function GestionDietas() {
 
       await fetchData();
     } catch (err: any) {
-      const detalle = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ');
-      toast.error('Error al guardar: ' + (detalle || 'Revisa consola'));
+      toast.error('Ocurrió un error al guardar los datos.');
     } finally {
       setLoading(false);
     }
