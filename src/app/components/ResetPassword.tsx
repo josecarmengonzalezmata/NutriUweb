@@ -20,10 +20,7 @@ export function ResetPassword() {
   const [success, setSuccess] = useState(false);
   useEffect(() => {
     const type = searchParams.get('type');
-    if (type !== 'recovery') {
-      setError('Este enlace no es válido para recuperación de contraseña. Solicita uno nuevo desde la pantalla de login.');
-      return;
-    }
+    
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     if (!params.has('access_token') && !params.has('type')) {
