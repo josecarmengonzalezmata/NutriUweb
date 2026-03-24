@@ -324,11 +324,13 @@ export function GestionCitas() {
     });
   };
 
-  const citasFiltradas = filterCitasByDate(selectedDate);
-  const citasPendientes = citasFiltradas.filter(
+  // Counters use the full citas array (not filtered by date)
+  const citasPendientes = citas.filter(
     c => c.estado === 'pendiente' || c.estado === 'pendiente_pagado' || c.estado === 'confirmada'
   );
-  const citasCompletadas = citasFiltradas.filter(c => c.estado === 'completada');
+  const citasCompletadas = citas.filter(c => c.estado === 'completada');
+  // Only the main list is filtered by date
+  const citasFiltradas = filterCitasByDate(selectedDate);
   const draftDateObject = draftSelectedDate ? isoDateToLocalDate(draftSelectedDate) : undefined;
   const fechaDateObject = fecha ? isoDateToLocalDate(fecha) : undefined;
   const minDateObject = isoDateToLocalDate(minDate);
@@ -1076,13 +1078,15 @@ export function GestionCitas() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {citasPendientes.length === 0 ? (
+              {citasFiltradas.filter(c => c.estado === 'pendiente' || c.estado === 'pendiente_pagado' || c.estado === 'confirmada').length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="h-16 w-16 mx-auto mb-4 text-[#D1E8D5]" />
                   <p className="text-base font-black text-gray-400 uppercase tracking-widest">No hay citas pendientes</p>
                 </div>
               ) : (
-                citasPendientes.map((cita) => (
+                citasFiltradas
+                  .filter(c => c.estado === 'pendiente' || c.estado === 'pendiente_pagado' || c.estado === 'confirmada')
+                  .map((cita) => (
                   <div key={cita.id} className="flex flex-col md:flex-row md:items-center justify-between p-6 border-2 border-[#F0FFF4] rounded-[2rem] hover:border-[#2E8B57] transition-all bg-white group">
                     <div className="flex items-center gap-5">
                       <Avatar className="h-14 w-14 border-2 border-[#D1E8D5] group-hover:border-[#2E8B57] transition-colors">

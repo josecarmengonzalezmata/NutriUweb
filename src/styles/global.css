@@ -1,3 +1,32 @@
+/* === Personalización de botón de cierre en toasts (sonner) === */
+.toaster .sonner-toast {
+  position: relative;
+}
+.toaster .sonner-close-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0 4px;
+  border-radius: 50%;
+  line-height: 1;
+}
+.toaster .sonner-toast:hover .sonner-close-button {
+  opacity: 0.85;
+}
+.toaster .sonner-close-button:hover {
+  background: rgba(255,255,255,0.15);
+  opacity: 1;
+}
 /* src/styles/global.css */
 
 /* === Barra de scroll personalizada === */

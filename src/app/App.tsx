@@ -299,13 +299,49 @@ function AppContent() {
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
       {showOfflineBanner && (
-        <div className="bg-red-600/95 text-white text-center py-3 px-4 font-medium sticky top-0 z-50 shadow-md animate-fade-out">
+        <div
+          className="group bg-red-600/95 text-white text-center py-3 px-4 font-medium sticky top-0 z-50 shadow-md animate-fade-out relative"
+          onMouseEnter={e => {
+            const closeBtn = (e.currentTarget.querySelector('.close-alert-btn') as HTMLElement);
+            if (closeBtn) closeBtn.style.opacity = '1';
+          }}
+          onMouseLeave={e => {
+            const closeBtn = (e.currentTarget.querySelector('.close-alert-btn') as HTMLElement);
+            if (closeBtn) closeBtn.style.opacity = '0';
+          }}
+        >
           Sin conexión a internet
+          <button
+            className="close-alert-btn absolute right-3 top-1/2 -translate-y-1/2 text-white bg-transparent border-none text-xl font-bold opacity-0 transition-opacity duration-200 cursor-pointer"
+            aria-label="Cerrar alerta"
+            onClick={() => setShowOfflineBanner(false)}
+            style={{ outline: 'none' }}
+          >
+            ×
+          </button>
         </div>
       )}
       {showRestoredBanner && (
-        <div className="bg-green-600/90 text-white text-center py-3 px-4 font-medium sticky top-0 z-50 shadow-md animate-fade-out">
+        <div
+          className="group bg-green-600/90 text-white text-center py-3 px-4 font-medium sticky top-0 z-50 shadow-md animate-fade-out relative"
+          onMouseEnter={e => {
+            const closeBtn = (e.currentTarget.querySelector('.close-alert-btn') as HTMLElement);
+            if (closeBtn) closeBtn.style.opacity = '1';
+          }}
+          onMouseLeave={e => {
+            const closeBtn = (e.currentTarget.querySelector('.close-alert-btn') as HTMLElement);
+            if (closeBtn) closeBtn.style.opacity = '0';
+          }}
+        >
           Conexión restaurada
+          <button
+            className="close-alert-btn absolute right-3 top-1/2 -translate-y-1/2 text-white bg-transparent border-none text-xl font-bold opacity-0 transition-opacity duration-200 cursor-pointer"
+            aria-label="Cerrar alerta"
+            onClick={() => setShowRestoredBanner(false)}
+            style={{ outline: 'none' }}
+          >
+            ×
+          </button>
         </div>
       )}
 
